@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Diagnosis Gangguan Mental</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      fieldset {
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Diagnosis Gangguan Mental</h1>
+    <p>
+      Berikut akan ditampilkan pertanyaan terkait gejala yang Anda alami.
+      Silakan jawab dengan Ya / Tidak dan jawab Kembali jika jawaban salah!
+    </p>
+
+    <form id="diagnosisForm">
+      <!-- Gejala -->
+      <fieldset>
+        <legend>Gejala</legend>
+        <div id="gejalaContainer"></div>
+      </fieldset>
+
+      <!-- Certainty Factor -->
+      <fieldset>
+        <legend>Certainty Factor</legend>
+        <label for="certaintyFactor">Seberapa Sering Anda Mengalami?</label>
+        <div id="certaintyFactor">
+          <input type="radio" id="tidakPasti" name="certainty" value="0" />
+          <label for="tidakPasti">Tidak Pasti</label>
+
+          <input
+            type="radio"
+            id="hampirTidakPasti"
+            name="certainty"
+            value="0.2"
+          />
+          <label for="hampirTidakPasti">Hampir Tidak Pasti</label>
+
+          <input
+            type="radio"
+            id="kemungkinanBesarTidak"
+            name="certainty"
+            value="0.3"
+          />
+          <label for="kemungkinanBesarTidak">Kemungkinan Besar Tidak</label>
+
+          <input type="radio" id="mungkinTidak" name="certainty" value="0.4" />
+          <label for="mungkinTidak">Mungkin Tidak</label>
+
+          <input
+            type="radio"
+            id="kemungkinanKecil"
+            name="certainty"
+            value="0.5"
+          />
+          <label for="kemungkinanKecil">Kemungkinan Kecil</label>
+
+          <input type="radio" id="mungkin" name="certainty" value="0.6" />
+          <label for="mungkin">Mungkin</label>
+
+          <input
+            type="radio"
+            id="kemungkinanBesar"
+            name="certainty"
+            value="0.7"
+          />
+          <label for="kemungkinanBesar">Kemungkinan Besar</label>
+
+          <input type="radio" id="hampirPasti" name="certainty" value="0.8" />
+          <label for="hampirPasti">Hampir Pasti</label>
+
+          <input type="radio" id="pasti" name="certainty" value="1.0" />
+          <label for="pasti">Pasti</label>
+        </div>
+      </fieldset>
+
+      <button type="button" onclick="prevQuestion()">
+        Pertanyaan Sebelumnya
+      </button>
+      <button type="button" onclick="nextQuestion()">
+        Pertanyaan Berikutnya
+      </button>
+    </form>
+
+    <div id="results" style="display: none">
+      <h2>Hasil Diagnosis:</h2>
+      <p id="resultText"></p>
+    </div>
+
+    <script>
+      const gejalaContainer = document.getElementById("gejalaContainer");
+      const certaintyFactorContainer =
+        document.getElementById("certaintyFactor");
+      let gejalaIndex = 0;
+      const point = new Array(26).fill(0);
+      const certaintyValues = [];
+
+      const questions = [
+        "Apakah pasien mengalami perubahan nafsu makan (meningkat/menurun) ?",
+        "Apakah pasien mengalami gangguan tidur (sulit tidur atau banyak tidur) ?",
+        "Apakah pasien bicara/bergerak lebih lambat ?",
+        "Apakah pasien mengalami kehilangan kepercayaan diri?",
+        "Apakah pasien merasa bersalah pada diri sendiri ?",
+        "Apakah pasien berniat menyakiti diri sendiri / bunuh diri ?",
+        "Apakah pasien sering merasa sedih ?",
+        "Apakah pasien merasakandada berdebar ?",
+        "Apakah pasien sulit bernafas ?",
+        "Apakah pasien merasa tercekik ?",
+        "Apakah pasien nyeri dan sesak di dada ?",
+        "Apakah pasien mual dan gangguan perut ?",
+        "Apakah pasien pusing atau sakit kepala ?",
+        "Apakah pasien memiliki rasa takut dan khawatir berlebih ?",
+        "Apakah pasien mudah tersinggung/curiga kepada orang lain ?",
+        "Apakah pasien sulit konsentrasi dalam melakukan kegiatan ?",
+        "Apakah pasien mendengar atau melihat yang tidak ada (halusinasi) ?",
+        "Apakah pasien kurang bersosialisasi atau tidak mau berinteraksi dengan orang lain ?",
+        "Apakah Pasien memiliki keyakinan terhadap sesuatu yang tidak nyata (Delusi) ?",
+        "Apakah Pasien sering membicarakan yang tidak masuk akal ?",
+        "Apakah pasien memiliki sikap terlalu percaya diri ?",
+        "Apakah pasien bicara dengan cepat dan berganti-ganti topik ?",
+        "Apakah pasien sering gelisah dan mudah marah ?",
+        "Apakah pasien mengalami penurunan kemampuan berperilaku/tidak dapat beraktivitas ?",
+        "Apakah pasien sering diam membisu atau sering dengan ekpresi datar/kosong ?",
+        "Apakah pasien sering mengalami senang berlebih tanpa sebab ?",
+      ];
+
+      function renderQuestion() {
+        const gejala = questions[gejalaIndex];
+
+        const div = document.createElement("div");
+        div.innerHTML = `
+      <label>${gejalaIndex + 1}. ${gejala}</label>
+      <div id="gejala${gejalaIndex}">
+        <input type="radio" id="ya" name="gejala" value="ya">
+        <label for="ya">Ya</label>
+        <input type="radio" id="tidak" name="gejala" value="tidak">
+        <label for="tidak">Tidak</label>
+      </div>
+    `;
+        gejalaContainer.innerHTML = "";
+        gejalaContainer.appendChild(div);
+
+        // Menyembunyikan Certainty Factor container
+        certaintyFactorContainer.style.display = "none";
+
+        // Menambahkan event listener pada radio button gejala "Ya"
+        const yaRadio = document.getElementById("ya");
+        yaRadio.addEventListener("change", function () {
+          // Jika jawaban "Ya" dipilih, tampilkan Certainty Factor container
+          if (yaRadio.checked) {
+            certaintyFactorContainer.style.display = "block";
+          } else {
+            // Jika jawaban "Tidak" dipilih, sembunyikan Certainty Factor container dan set value menjadi 0
+            certaintyFactorContainer.style.display = "none";
+            point[gejalaIndex] = 0;
+          }
+        });
+
+        // Memeriksa apakah jawaban untuk pertanyaan ini sudah ada
+        if (certaintyValues[gejalaIndex] !== undefined) {
+          const radios = document.querySelectorAll('input[name="gejala"]');
+          radios.forEach((radio) => {
+            if (radio.value === certaintyValues[gejalaIndex]) {
+              radio.checked = true;
+              // Menampilkan Certainty Factor container jika jawaban "Ya" dipilih
+              if (certaintyValues[gejalaIndex] === "ya") {
+                certaintyFactorContainer.style.display = "block";
+              }
+            }
+          });
+        }
+
+        // Memeriksa apakah jawaban Certainty Factor untuk pertanyaan ini sudah ada
+        const certaintyRadio = document.querySelector(
+          `input[name="certainty"][value="${point[gejalaIndex]}"]`
+        );
+        if (certaintyRadio) {
+          certaintyRadio.checked = true;
+        }
+      }
+
+      function resetOptions() {
+        const radios = document.querySelectorAll('input[name="gejala"]');
+        radios.forEach((radio) => (radio.checked = false));
+
+        const certaintyRadios = document.querySelectorAll(
+          'input[name="certainty"]'
+        );
+        certaintyRadios.forEach((radio) => (radio.checked = false));
+      }
+
+      function nextQuestion() {
+        const selectedGejala = document.querySelector(
+          'input[name="gejala"]:checked'
+        );
+        const selectedCertainty = document.querySelector(
+          'input[name="certainty"]:checked'
+        );
+
+        if (selectedGejala) {
+          certaintyValues[gejalaIndex] = selectedGejala.value;
+
+          // Menyimpan nilai ke dalam array point
+          if (selectedGejala.value === "ya") {
+            point[gejalaIndex] = parseFloat(selectedCertainty.value); // Menggunakan parseFloat untuk mengubah string menjadi angka
+          } else {
+            point[gejalaIndex] = 0;
+          }
+
+          // Jika jawaban "Ya" dipilih, tampilkan Certainty Factor container
+          if (selectedGejala.value === "ya") {
+            certaintyFactorContainer.style.display = "block";
+          } else {
+            // Jika jawaban "Tidak" dipilih, sembunyikan Certainty Factor container dan set value menjadi 0
+            certaintyFactorContainer.style.display = "none";
+          }
+
+          resetOptions();
+
+          if (gejalaIndex < questions.length - 1) {
+            gejalaIndex++;
+            renderQuestion();
+          } else {
+            showResults();
+          }
+        } else {
+          alert("Harap pilih jawaban untuk pertanyaan ini.");
+        }
+      }
+
+      function prevQuestion() {
+        resetOptions();
+
+        if (gejalaIndex > 0) {
+          gejalaIndex--;
+          renderQuestion();
+        } else {
+          alert("Ini adalah pertanyaan pertama.");
+        }
+      }
+      function min(...values) {
+        let minValue = Number.MAX_VALUE;
+        for (const value of values) {
+          if (value < minValue) {
+            minValue = value;
+          }
+        }
+        return minValue;
+      }
+
+      function showResults() {
+        // Rule penentuan penyakit
+        const rule = new Array(9);
+        rule[0] =
+          min(
+            point[0],
+            point[1],
+            point[2],
+            point[3],
+            point[4],
+            point[5],
+            point[6],
+            point[15]
+          ) * 0.81;
+        rule[1] =
+          min(
+            point[0],
+            point[1],
+            point[2],
+            point[3],
+            point[4],
+            point[5],
+            point[6],
+            point[14],
+            point[17],
+            point[18]
+          ) * 0.79;
+        rule[2] =
+          min(
+            point[1],
+            point[7],
+            point[8],
+            point[9],
+            point[10],
+            point[11],
+            point[12],
+            point[13]
+          ) * 0.85;
+        rule[3] =
+          min(
+            point[1],
+            point[16],
+            point[17],
+            point[18],
+            point[19],
+            point[22],
+            point[23],
+            point[25]
+          ) * 0.93;
+        rule[4] =
+          min(point[2], point[15], point[17], point[19], point[23], point[24]) *
+          0.9;
+        rule[5] =
+          min(point[2], point[16], point[18], point[19], point[23]) * 0.96;
+        rule[6] =
+          min(point[2], point[17], point[19], point[23], point[24]) * 0.92;
+        rule[7] =
+          min(
+            point[1],
+            point[4],
+            point[6],
+            point[14],
+            point[15],
+            point[17],
+            point[19],
+            point[20],
+            point[22],
+            point[25]
+          ) * 0.78;
+        rule[8] =
+          min(
+            point[1],
+            point[4],
+            point[6],
+            point[14],
+            point[15],
+            point[23],
+            point[25]
+          ) * 0.83;
+
+        // Menghitung nilai keyakinan penyakit
+        console.log("Rule 0-1:", rule[0], rule[1]);
+        const P01 = rule[0] + rule[1] * (1 - rule[0]);
+        console.log("P01:", P01);
+
+        console.log("Rule 2:", rule[2]);
+        const P02 = rule[2] * (1 - rule[2]);
+        console.log("P02:", P02);
+
+        console.log("Rule 3-6:", rule[3], rule[4], rule[5], rule[6]);
+        const P03 = rule[3] + rule[4] + rule[5] + rule[6] * (1 - rule[3]);
+        console.log("P03:", P03);
+
+        console.log("Rule 7-8:", rule[7], rule[8]);
+        const P04 = rule[7] + rule[8] * (1 - rule[7]);
+        console.log("P04:", P04);
+
+        // Menentukan hasil diagnosis
+        let diagnosis = "";
+        if (P01 > 0) {
+          diagnosis =
+            "Diagnosis: Gangguan Kecemasan dengan tingkat keyakinan system " +
+            P01 * 100 +
+            "%";
+        } else if (P02 > 0) {
+          diagnosis =
+            "Diagnosis: Gangguan Depresi dengan tingkat keyakinan system " +
+            P02 * 100 +
+            "%";
+        } else if (P03 > 0) {
+          diagnosis =
+            "Diagnosis: Gangguan Bipolar dengan tingkat keyakinan system " +
+            P03 * 100 +
+            "%";
+        } else if (P04 > 0) {
+          diagnosis =
+            "Diagnosis: Gangguan PTSD dengan tingkat keyakinan system " +
+            P04 * 100 +
+            "%";
+        } else {
+          diagnosis = "Tidak dapat menentukan diagnosis";
+        }
+
+        // Menampilkan hasil
+        const resultText = document.getElementById("resultText");
+        resultText.textContent = diagnosis;
+
+        // Menampilkan div hasil
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.style.display = "block";
+
+        // Menyembunyikan form pertanyaan
+        const form = document.getElementById("diagnosisForm");
+        form.style.display = "none";
+      }
+
+      renderQuestion();
+    </script>
+  </body>
+</html>
